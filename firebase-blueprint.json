@@ -1,0 +1,253 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and educational preferences",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "User ID matching Firebase Auth UID",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address",
+          "maxLength": 256
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Student display name",
+          "maxLength": 100
+        },
+        "selectedExam": {
+          "type": "string",
+          "description": "Target exam goal",
+          "enum": ["NEET", "JEE_MAIN", "JEE_ADVANCED", "CBSE_BOARDS"]
+        },
+        "selectedClass": {
+          "type": "string",
+          "description": "Current academic class",
+          "enum": ["11", "12", "Repeater"]
+        },
+        "totalXP": {
+          "type": "number",
+          "description": "Total academic XP earned"
+        },
+        "streakDays": {
+          "type": "number",
+          "description": "Daily study streak counter"
+        },
+        "lastActiveDate": {
+          "type": "string",
+          "description": "ISO date string of last active session",
+          "maxLength": 32
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Account creation timestamp",
+          "maxLength": 64
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last profile update timestamp",
+          "maxLength": 64
+        }
+      },
+      "required": ["id", "selectedExam", "selectedClass"]
+    },
+    "UserProgressDoc": {
+      "title": "UserProgressDoc",
+      "description": "Aggregate active reading, question history, and notes sync state",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owning user UID",
+          "maxLength": 128
+        },
+        "studyMood": {
+          "type": "string",
+          "description": "Current study focus mood",
+          "maxLength": 64
+        },
+        "personality": {
+          "type": "string",
+          "description": "Assigned learning archetype",
+          "maxLength": 64
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of last sync",
+          "maxLength": 64
+        }
+      },
+      "required": ["userId"]
+    },
+    "MistakeRecord": {
+      "title": "MistakeRecord",
+      "description": "Mistake logged in student notebook",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique mistake entry ID",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owning student UID",
+          "maxLength": 128
+        },
+        "questionId": {
+          "type": "string",
+          "description": "Associated NCERT question ID",
+          "maxLength": 128
+        },
+        "chapterId": {
+          "type": "string",
+          "description": "Subject chapter ID",
+          "maxLength": 128
+        },
+        "pageNumber": {
+          "type": "number",
+          "description": "NCERT page number"
+        },
+        "selectedOption": {
+          "type": "string",
+          "description": "Option chosen by student",
+          "maxLength": 10
+        },
+        "correctOption": {
+          "type": "string",
+          "description": "Correct textbook option",
+          "maxLength": 10
+        },
+        "category": {
+          "type": "string",
+          "description": "Mistake category like silly, concept, confusion, calculation",
+          "maxLength": 64
+        },
+        "userNote": {
+          "type": "string",
+          "description": "Student reflection note",
+          "maxLength": 1000
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Epoch timestamp of mistake"
+        },
+        "resolved": {
+          "type": "boolean",
+          "description": "Whether mistake concept is resolved"
+        }
+      },
+      "required": ["id", "userId", "questionId", "chapterId", "category", "resolved"]
+    },
+    "RevisionItem": {
+      "title": "RevisionItem",
+      "description": "Spaced repetition revision item",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Revision schedule entry ID",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owning student UID",
+          "maxLength": 128
+        },
+        "questionId": {
+          "type": "string",
+          "description": "Question ID for scheduled recall",
+          "maxLength": 128
+        },
+        "chapterId": {
+          "type": "string",
+          "description": "Chapter ID",
+          "maxLength": 128
+        },
+        "pageNumber": {
+          "type": "number",
+          "description": "NCERT page number"
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Due date ISO string (YYYY-MM-DD)",
+          "maxLength": 32
+        },
+        "intervalDays": {
+          "type": "number",
+          "description": "Current spaced repetition interval in days"
+        },
+        "repetitions": {
+          "type": "number",
+          "description": "Number of successful spaced reviews"
+        },
+        "status": {
+          "type": "string",
+          "description": "due | retained | mastered",
+          "maxLength": 32
+        }
+      },
+      "required": ["id", "userId", "questionId", "chapterId", "dueDate", "status"]
+    },
+    "BookmarkItem": {
+      "title": "BookmarkItem",
+      "description": "Bookmarked NCERT question or formula",
+      "type": "object",
+      "properties": {
+        "questionId": {
+          "type": "string",
+          "description": "Question identifier",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owning student UID",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp",
+          "maxLength": 64
+        }
+      },
+      "required": ["questionId", "userId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Student profile document and examination settings"
+    },
+    "/users/{userId}/progress/{progressDocId}": {
+      "schema": {
+        "$ref": "#/entities/UserProgressDoc"
+      },
+      "description": "Active learning progress, chapter states, and notes"
+    },
+    "/users/{userId}/mistakes/{mistakeId}": {
+      "schema": {
+        "$ref": "#/entities/MistakeRecord"
+      },
+      "description": "Student personal mistake notebook collection"
+    },
+    "/users/{userId}/revisionQueue/{itemId}": {
+      "schema": {
+        "$ref": "#/entities/RevisionItem"
+      },
+      "description": "Personal spaced repetition flashcard queue"
+    },
+    "/users/{userId}/bookmarks/{questionId}": {
+      "schema": {
+        "$ref": "#/entities/BookmarkItem"
+      },
+      "description": "Student pinned questions and high-yield items"
+    }
+  }
+}

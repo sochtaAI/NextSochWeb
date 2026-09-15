@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+}
+
+/* Custom smooth scroll and textbook reader styling */
+.reader-content {
+  line-height: 1.75;
+  font-size: 1.05rem;
+}
+
+.reader-content p {
+  margin-bottom: 1.25rem;
+}
+
+.reader-content h3 {
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Custom pulse highlight for Jump to Source */
+@keyframes source-flash {
+  0% { background-color: rgba(234, 179, 8, 0.4); }
+  50% { background-color: rgba(234, 179, 8, 0.2); }
+  100% { background-color: transparent; }
+}
+
+.source-highlight-flash {
+  animation: source-flash 2.5s ease-out;
+  border-left: 3px solid #eab308;
+  padding-left: 8px;
+  border-radius: 4px;
+}

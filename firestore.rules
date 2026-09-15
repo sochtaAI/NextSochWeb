@@ -1,0 +1,134 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Health check endpoint for connection verification
+    match /test/{testDoc} {
+      allow get: if true;
+    }
+
+    // User Root Collection
+    match /users/{userId} {
+      function isValidUserProfile(data) {
+        return data.id is string && data.id == userId
+          && data.selectedExam in ['NEET', 'JEE_MAIN', 'JEE_ADVANCED', 'CBSE_BOARDS']
+          && data.selectedClass in ['11', '12', 'Repeater']
+          && (!('email' in data) || (data.email is string && data.email.size() <= 256))
+          && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100))
+          && (!('totalXP' in data) || (data.totalXP is number && data.totalXP >= 0))
+          && (!('streakDays' in data) || (data.streakDays is number && data.streakDays >= 0))
+          && (!('lastActiveDate' in data) || (data.lastActiveDate is string && data.lastActiveDate.size() <= 32));
+      }
+
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false; // Deny user enumeration
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming())
+        && incoming().id == existing().id;
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      // User Progress Subcollection
+      match /progress/{progressDocId} {
+        function isValidProgress(data) {
+          return data.userId is string && data.userId == userId
+            && (!('studyMood' in data) || (data.studyMood is string && data.studyMood.size() <= 64))
+            && (!('personality' in data) || (data.personality is string && data.personality.size() <= 64));
+        }
+
+        allow get: if isOwner(userId) && isValidId(progressDocId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(progressDocId) && isValidProgress(incoming());
+        allow update: if isOwner(userId) && isValidId(progressDocId) && isValidProgress(incoming())
+          && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(progressDocId);
+      }
+
+      // Mistakes Notebook Subcollection
+      match /mistakes/{mistakeId} {
+        function isValidMistake(data) {
+          return data.id is string && data.id.size() <= 128
+            && data.userId is string && data.userId == userId
+            && data.questionId is string && data.questionId.size() <= 128
+            && data.chapterId is string && data.chapterId.size() <= 128
+            && data.resolved is bool
+            && (!('pageNumber' in data) || data.pageNumber is number)
+            && (!('selectedOption' in data) || (data.selectedOption is string && data.selectedOption.size() <= 10))
+            && (!('correctOption' in data) || (data.correctOption is string && data.correctOption.size() <= 10))
+            && (!('category' in data) || (data.category is string && data.category.size() <= 64))
+            && (!('userNote' in data) || (data.userNote is string && data.userNote.size() <= 1000))
+            && (!('timestamp' in data) || data.timestamp is number);
+        }
+
+        allow get: if isOwner(userId) && isValidId(mistakeId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(mistakeId) && isValidMistake(incoming());
+        allow update: if isOwner(userId) && isValidId(mistakeId) && isValidMistake(incoming())
+          && incoming().id == existing().id && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(mistakeId);
+      }
+
+      // Spaced Revision Queue Subcollection
+      match /revisionQueue/{itemId} {
+        function isValidRevisionItem(data) {
+          return data.id is string && data.id.size() <= 128
+            && data.userId is string && data.userId == userId
+            && data.questionId is string && data.questionId.size() <= 128
+            && data.chapterId is string && data.chapterId.size() <= 128
+            && data.status is string && data.status.size() <= 32
+            && (!('dueDate' in data) || (data.dueDate is string && data.dueDate.size() <= 32))
+            && (!('intervalDays' in data) || data.intervalDays is number)
+            && (!('repetitions' in data) || data.repetitions is number)
+            && (!('pageNumber' in data) || data.pageNumber is number);
+        }
+
+        allow get: if isOwner(userId) && isValidId(itemId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(itemId) && isValidRevisionItem(incoming());
+        allow update: if isOwner(userId) && isValidId(itemId) && isValidRevisionItem(incoming())
+          && incoming().id == existing().id && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(itemId);
+      }
+
+      // Bookmarks Subcollection
+      match /bookmarks/{questionId} {
+        function isValidBookmark(data) {
+          return data.questionId is string && data.questionId.size() <= 128
+            && data.userId is string && data.userId == userId;
+        }
+
+        allow get: if isOwner(userId) && isValidId(questionId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(questionId) && isValidBookmark(incoming());
+        allow update: if isOwner(userId) && isValidId(questionId) && isValidBookmark(incoming())
+          && incoming().questionId == existing().questionId && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(questionId);
+      }
+    }
+  }
+}
